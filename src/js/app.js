@@ -7,6 +7,7 @@ define(function(require) {
   var coupon = require('coupon');
   var config = require('config');
   var debounce = require('util').debounce;
+  var parseParams = require('util').parseParams;
 
   var templates = require('templates/index');
   var overlayTemplate = templates.overlay;
@@ -195,6 +196,14 @@ define(function(require) {
       this.hideErrors();
       confirmation.$el.detach();
       this.$modalBody.append(this.$form);
+
+      var params = parseParams(window.location.search);
+      var coupon = params.coupon_code;
+
+      if (coupon) {
+        $('.Celery-TextInput--coupon').val(coupon);
+        this.updateDiscount();
+      }
     },
 
     showConfirmation: function(data) {
