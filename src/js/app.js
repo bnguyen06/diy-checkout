@@ -70,9 +70,9 @@ define(function(require) {
       return this;
     },
 
-    loadShop: function() {
+    loadShop: function(e) {
       // TODO: Support passing slug
-      var el = $('[data-celery]').first();
+      var el = e.target;
       var slug = el && $(el).data('celery') || '';
 
       if (slug) {
@@ -82,13 +82,11 @@ define(function(require) {
       shop.fetch(this.updateOrderSummary);
     },
 
-    show: function() {
+    show: function(e) {
       var self = this;
 
-      // Load shop data if it wasn't loaded yet
-      if (!shop.data.user_id) {
-        this.loadShop();
-      }
+      // Always load shop data
+      this.loadShop(e);
 
       $(document.body).append(this.children);
       this.showShop();
