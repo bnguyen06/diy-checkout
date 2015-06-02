@@ -15,6 +15,28 @@ define(function(require) {
   var form = require('form').initialize();
   var confirmation = require('confirmation').initialize();
 
+  var VARIANTS = {
+    '556d3c94f395f80a00afd773': [
+      {
+        // Metal Link Bracelet
+        standard: 'efaaac27-015d-4e61-989f-57038dc2c2c4',
+        upgrade: 'd6106bc4-fdf7-4f22-870a-753f045b694a'
+      }, {
+        // Black Leather Band
+        standard: '54f3532b-e62d-4249-a7d0-5bfe1d46b251',
+        upgrade: '649f8331-1e42-4e76-92ba-01525b6ec5cb'
+      }, {
+        // Brown Leather Band
+        standard: 'efceef8f-abb2-4f4e-9068-53a26f0f29a3',
+        upgrade: '71770874-5439-4647-9c92-ceee23ac47ce'
+      }, {
+        // Tan Suede Leather Band
+        standard: '87d6f7b9-17db-495a-a5c9-a89ce091b843',
+        upgrade: 'd6da67c0-9eb9-4e37-beb8-85cacfbab398'
+      }
+    ]
+  }
+
   return {
     initialize: function(options) {
       if (this.initialized) {
@@ -59,6 +81,7 @@ define(function(require) {
       $form.on('valid', this.createOrder);
       $form.on('change', 'select, [name=shipping_zip]',
         this.updateOrderSummary);
+      $form.on('click', '[name=upgrade]', $.proxy(this.updateVariant, this));
       $form.on('keyup', '[name=coupon]', debounce(this.updateDiscount, 500));
 
       $form.find('select').change();
@@ -74,9 +97,14 @@ define(function(require) {
       // TODO: Support passing slug
       var el = $('[data-celery]').first();
       var slug = el && $(el).data('celery') || '';
+      var variant = el && $(el).data('celery-variant') || '';
 
       if (slug) {
         celeryClient.config.slug = slug;
+      }
+
+      if (variant) {
+        celeryClient.config.variantId = variant;
       }
 
       shop.fetch(this.updateOrderSummary);
@@ -325,6 +353,7 @@ define(function(require) {
       // Line Item
       var lineItem = {
         product_id: shop.data.product._id,
+        variant_id: celeryClient.config.variantId,
         quantity: this._getQuantity()
       };
 
@@ -369,8 +398,52 @@ define(function(require) {
       return $field.val();
     },
 
+    updateVariant: function() {
+      var productId = shop.data.product && shop.data.product._id;
+      var currentVariant = celeryClient.config.variantId;
+      var isUpgraded = this.$form.find('[name=upgrade]')[0].checked;
+
+      var result = $.grep(VARIANTS[productId], function(variant) {
+        return isUpgraded ?
+          variant.standard === currentVariant :
+          variant.upgrade === currentVariant;
+      });
+
+      if (!result.length) {
+        throw new Error('No upgrade/downgrade variant mapping found.')
+      }
+
+      var matchedVariantMap = result[0];
+
+      celeryClient.config.variantId = isUpgraded ?
+        matchedVariantMap.upgrade :
+        matchedVariantMap.standard;
+
+      this.updateOrderSummary();
+    },
+
     _getPrice: function() {
-      return shop.data.product && shop.data.product.price;
+      var variants = shop.data.product && shop.data.product.variants || [];
+      var variantId = celeryClient.config.variantId;
+
+      // If no variants, return base price
+      if (!variants.length) {
+        return shop.data.product && shop.data.product.price;
+      }
+
+      // Look for variant
+      var result = $.grep(variants, function(variant) {
+        return variant.id === variantId;
+      });
+
+      // If no variant matched, throw error
+      // otherwise, return matched variant price
+      if (!result.length) {
+        throw new Error('No variant found.');
+      }
+
+      var matchedVariant = result[0];
+      return matchedVariant.price;
     },
 
     _getSubtotal: function() {
