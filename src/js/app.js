@@ -7,6 +7,7 @@ define(function(require) {
   var coupon = require('coupon');
   var config = require('config');
   var debounce = require('util').debounce;
+  var analytics = require('analytics');
 
   var templates = require('templates/index');
   var overlayTemplate = templates.overlay;
@@ -170,8 +171,9 @@ define(function(require) {
       this.onConfirmation(res.data);
     },
 
+    // Runs on confirmation with order data
     onConfirmation: function(data) {
-      // Runs on confirmation with order data
+      analytics.trackGaEcommerce(data);
     },
 
     handleError: function(err) {
