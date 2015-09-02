@@ -172,6 +172,29 @@ define(function(require) {
 
     onConfirmation: function(data) {
       // Runs on confirmation with order data
+      this._initFacebook(data);
+    },
+
+    _initFacebook: function(order) {
+      var FACEBOOK_PIXEL_ID = 'FACEBOOK_PIXEL_ID'; // TODO
+
+      (function() {
+        var _fbq = window._fbq || (window._fbq = []);
+        if (!_fbq.loaded) {
+          var fbds = document.createElement('script');
+          fbds.async = true;
+          fbds.src = '//connect.facebook.net/en_US/fbds.js';
+          var s = document.getElementsByTagName('script')[0];
+          s.parentNode.insertBefore(fbds, s);
+          _fbq.loaded = true;
+        }
+      })();
+
+      window._fbq = window._fbq || [];
+      window._fbq.push(['track', FACEBOOK_PIXEL_ID, {
+        'value': order.total,
+        'currency': order.currency.toUpperCase()}
+      ]);
     },
 
     handleError: function(err) {
