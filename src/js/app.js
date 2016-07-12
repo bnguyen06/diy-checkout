@@ -242,12 +242,13 @@ define(function(require) {
     // Coupon adds a discount
     updateDiscount: function() {
       var code = this._getCouponCode();
+      var lineItems = this._getLineItems();
       var priceSelector = '.Celery-OrderSummary-price--coupon';
       var operatorSelector = '.Celery-OrderSummary-operator.coupon';
       var lineSelector = '.Celery-OrderSummary-line.coupon';
       var groupSelector = lineSelector + ', ' + operatorSelector;
 
-      coupon.validate(code, $.proxy(function(valid) {
+      coupon.validate(code, lineItems, $.proxy(function(valid) {
         var discount;
 
         this.updateTaxes();
@@ -323,13 +324,7 @@ define(function(require) {
         }
       }
 
-      // Line Item
-      var lineItem = {
-        product_id: shop.data.product._id,
-        quantity: this._getQuantity()
-      };
-
-      order.line_items.push(lineItem);
+      order.line_items = this._getLineItems();
 
       return order;
     },
@@ -372,6 +367,17 @@ define(function(require) {
 
     _getPrice: function() {
       return shop.data.product && shop.data.product.price;
+    },
+
+    _getLineItems: function() {
+      var lineItem = {
+        product_id: shop.data.product._id,
+        // variant_id: celeryClient.config.variantId, // uncomment if variants are used
+        price: this._getPrice(),
+        quantity: this._getQuantity()
+      };
+
+      return [lineItem];
     },
 
     _getLineItemsTotal: function() {

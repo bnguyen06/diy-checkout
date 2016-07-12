@@ -3,7 +3,7 @@ define(function(require) {
 
   return {
     // Coupon adds a discount
-    validate: function(code, cb) {
+    validate: function(code, lineItems, cb) {
       if (!code) {
         return cb(true);
       }
@@ -24,14 +24,15 @@ define(function(require) {
       }
 
       // Code not found, fetch and try again
-      this.fetch(code, function(err, data) {
-        this.validate(code, cb);
+      this.fetch(code, lineItems, function(err, data) {
+        this.validate(code, lineItems, cb);
       });
     },
 
-    fetch: function(code, cb) {
+    fetch: function(code, lineItems, cb) {
       return celeryClient.fetchCoupon({
-        code: code
+        code: code,
+        line_items: lineItems,
       }, $.proxy(function(err, data) {
         // Cache result
         if (err || !data || !data.data || data.data.code === undefined) {
