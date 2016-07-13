@@ -10,22 +10,12 @@ define(function(require) {
 
       code = code.toLowerCase();
 
-      // Cache hit
-      if (this.data[code] !== undefined) {
-        var coupon = this.data[code];
-
-        // Invalid
-        if (coupon === false) {
-          return cb(false);
-        }
-
-        // Valid
-        return cb(true);
-      }
-
       // Code not found, fetch and try again
       this.fetch(code, lineItems, function(err, data) {
-        this.validate(code, lineItems, cb);
+        if (this.data[code]) {
+          return cb(true);
+        }
+        return cb(false);
       });
     },
 
